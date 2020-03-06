@@ -1,4 +1,4 @@
-# SM4 DFA: differential fault analysis attacks (DFA) against AES
+# SM4 DFA: differential fault analysis attacks (DFA) against SM4
 
 ## Introduction
 
