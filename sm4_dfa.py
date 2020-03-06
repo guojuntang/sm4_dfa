@@ -1,7 +1,7 @@
 '''
 @Author: Guojun Tang
 @Date: 2020-02-22 03:20:20
-@LastEditTime: 2020-02-27 18:36:24
+@LastEditTime: 2020-03-06 15:35:44
 @LastEditors: Please set LastEditors
 @Description:  sm4_dfa for python
 @FilePath: \sm4\sm4.py
@@ -13,7 +13,7 @@ dfa: https://github.com/SideChannelMarvels/JeanGrey/blob/master/phoenixAES/
 import random
 from enum import Enum
 
-FaultStatus = Enum('FaultStatus', 'Crash Loop NoFault MinorFault MajorFault WrongFault GoodEncFault GoodDecFault')
+FaultStatus = Enum('FaultStatus', 'Crash Loop NoFault MinorFault MajorFault WrongFault round31Fault round30Fault round29Fault')
 
 
 blockSize = 16
@@ -51,8 +51,11 @@ byte2slices = lambda state:[get_uint32_be(state[i * 4 : (i + 1) * 4 ]) for i in 
 
 find_candidate_index = lambda diff: [i  for i in range(4, len(diff)) if diff[i] is not b'\x00'][0] % 4
 
-check_diff = lambda diff:  (diff[0] is not 0) & (diff[1] is not 0) & (diff[2] is not 0) & (diff[3] is not 0)
-
+def check_diff(diffmap, n):
+    for i in range(n-1):
+        if diffmap[i] is not i:
+            return False
+    return True
 SM4_ENCRYPT = 0
 SM4_DECRYPT = 1
 
@@ -199,9 +202,10 @@ def gen_fault_cipher(in_put, sk, inject_round, verbose=1):
             #Simulate random fault and random offset of the fault 
             diff = random.randint(1,2**8 - 1)
             offset = random.randrange(0,25, 8)
+            index = random.randint(1,3)
             if(verbose > 3):
                 print("round %d:Inject diff 0x%.2x at offset %d"% (inject_round, diff, offset))
-            ulbuf[idx + 1] ^= diff << offset
+            ulbuf[idx + index] ^= diff << offset
         ulbuf[idx + 4] = f_function(ulbuf[idx], ulbuf[idx + 1], ulbuf[idx + 2], ulbuf[idx + 3], sk[idx])
     out_put += put_uint32_be(ulbuf[35])
     out_put += put_uint32_be(ulbuf[34])
@@ -274,24 +278,32 @@ def check(output, encrypt=None, verbose=1, init=False, _intern={}):
     #record the index of difference
     diffmap=[i for i in range(len(diff)) if diff[i] != 0]
     diffsum=len(diffmap)
+    status = FaultStatus.Loop
     """
     SM4 always put the updated data at left hand side,
     so the fist four diff will never be equal to 0
     """
-    if diffsum==5:
+    if diffsum == 5 or diffsum == 8 or diffsum == 9 or diffsum == 12 or diffsum == 13  :
         """
-            The target cipher for analysising the round key always contains five bytes difference
-            And the index of the fifth difference indicates the position of the S-BOX for cracking the key byte.
+            The target cipher in round 31 for analysising the round key always contains five bytes difference
+            And the index of the four/eight/twelve difference indicates the position of the S-BOX for cracking the key byte.
         """
-        if encrypt is not False and check_diff(diff):
+        if  check_diff(diffmap, diffsum):
             if verbose>2:
-                print("FI: good candidate for encryption!")
+                if diffsum == 5:
+                    print("FI: good candidate for round31!")
+                if diffsum == 9 or diffsum == 8:
+                    print("FI: good candidate for round30!")
+                if diffsum == 13 or diffsum ==12:
+                    print("FI: good candidate for round29!")
+                if diffsum == 5:
+                    status = FaultStatus.round31Fault
+                if diffsum == 9 or diffsum == 8:
+                    status = FaultStatus.round30Fault
+                if  diffsum ==12 or diffsum == 13:
+                    status = FaultStatus.round29Fault
             #big endian int, transform the index 
-            return (FaultStatus.GoodEncFault, (3 - diffmap[4] %4))
-        elif encrypt is not True and check_diff(diff):
-            if verbose>2:
-                print("FI: good candidate for decryption!")
-            return (FaultStatus.GoodDecFault, (3 - diffmap[4] %4))
+            return (status, (3 - diffmap[diffsum - 1] %4))
         else:
             if verbose>2:
                 print("FI: wrong candidate  (%2i)" % diffsum)
@@ -402,6 +414,7 @@ def foo():
 
 
 foo()
+
 
 
 
