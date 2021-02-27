@@ -20,6 +20,8 @@ ISSN 0020-0190,
 https://doi.org/10.1016/j.ipl.2010.11.011.
 
 
+https://kns.cnki.net/kcms/detail/detail.aspx?dbcode=CJFD&dbname=CJFD2006&filename=JSJX200609011&v=xAkChrfMKVAUb6xQPrdHbTHWM98SnCwCOA9gyxNS4qm3YEcyZUB00vqmQY1zUibw
+
 -------------------
 
 ## Usage
