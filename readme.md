@@ -20,6 +20,9 @@ ISSN 0020-0190,
 https://doi.org/10.1016/j.ipl.2010.11.011.
 
 
+
+张蕾,吴文玲.SMS4密码算法的差分故障攻击[J].计算机学报,2006(09):1596-1602.
+
 https://kns.cnki.net/kcms/detail/detail.aspx?dbcode=CJFD&dbname=CJFD2006&filename=JSJX200609011&v=xAkChrfMKVAUb6xQPrdHbTHWM98SnCwCOA9gyxNS4qm3YEcyZUB00vqmQY1zUibw
 
 -------------------
